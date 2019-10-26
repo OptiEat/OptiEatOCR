@@ -11,17 +11,22 @@ def lambda_handler(event, context):
         ContentEncoding='base64',
         Body=base64.b64decode(imageBytes)
     );
-    rekognition = boto3.client('rekognition')
-    response = rekognition.detect_text(
-        Image={
+    textract = boto3.client('textract')
+    response = textract.analyze_document(
+        Document={
             'S3Object': {
                 'Bucket': 'optieat.images',
                 'Name': 'image.png'
             }
-        }
+        },
+        FeatureTypes=['TABLES']
     )
+    lines = []
     print(response)
+    for textDet in response['Blocks']:
+        if textDet['BlockType'] == 'LINE':
+            lines.append(textDet['Text'])
     return {
         'statusCode': 200,
-        'body': response
+        'body': lines
     }
